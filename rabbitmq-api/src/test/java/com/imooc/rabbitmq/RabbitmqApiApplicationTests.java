@@ -1,4 +1,4 @@
-package com.imooc.rabbitmqapi;
+package com.imooc.rabbitmq;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
