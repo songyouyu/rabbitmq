@@ -12,7 +12,7 @@ import java.util.Map;
  * @author youyu.song
  * @date 2019/7/27 10:48
  */
-public class Procuder {
+public class Producer {
 
 	public static void main(String[] args) throws Exception {
 		// 创建 ConnectionFactory.
