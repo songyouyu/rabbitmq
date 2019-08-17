@@ -1,15 +1,19 @@
 package com.imooc.rabbitmqspring;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import com.rabbitmq.client.Channel;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
+import org.springframework.amqp.support.ConsumerTagStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.UUID;
 
 /**
  * @author youyu.song
@@ -87,6 +91,53 @@ public class RabbitMQConfig {
 	@Bean
 	public Queue queue_pdf() {
 		return new Queue("pdf_queue", true);
+	}
+
+	/**
+	 * 消息模版组件
+	 * @param connectionFactory
+	 * @return
+	 */
+	@Bean
+	public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+		RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+
+		return rabbitTemplate;
+	}
+
+	/**
+	 * 消息监听容器
+	 * @param connectionFactory
+	 * @return
+	 */
+	@Bean
+	public SimpleMessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory) {
+		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
+		container.setQueues(queue001(), queue002(), queue003(), queue_image(), queue_pdf());
+		// 当前的消费者数量
+		container.setConcurrentConsumers(1);
+		container.setMaxConcurrentConsumers(5);
+		container.setDefaultRequeueRejected(false);
+		// 自动签收
+		container.setAcknowledgeMode(AcknowledgeMode.AUTO);
+		container.setExposeListenerChannel(true);
+		// 消费端的标签策略
+		container.setConsumerTagStrategy(new ConsumerTagStrategy() {
+			@Override
+			public String createConsumerTag(String queue) {
+				return queue + "_" + UUID.randomUUID().toString();
+			}
+		});
+
+		container.setMessageListener(new ChannelAwareMessageListener() {
+			@Override
+			public void onMessage(Message message, Channel channel) throws Exception {
+				String msg = new String(message.getBody());
+				System.err.println("----------消费者 : " + msg);
+			}
+		});
+
+		return container;
 	}
 
 }
