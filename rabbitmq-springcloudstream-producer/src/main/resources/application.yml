@@ -1,0 +1,26 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /producer
+
+spring:
+  application:
+    name: producer
+  cloud:
+    stream:
+      bindings:
+        output_channel:
+          destination: exchange-3
+          group: queue-3
+          binder: rabbit_cluster
+
+      binders:
+        rabbit_cluster:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 192.168.28.133:5672
+                username: guest
+                password: guest
+                virtual-host: /
